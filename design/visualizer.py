@@ -7,7 +7,7 @@ class PuzzleSolutionVisualizer:
     Works with any solver that provides a solution path.
     """
     
-    def __init__(self, algorithm_name, algorithm_color, nodes_explored, max_depth=None, parent=None):
+    def __init__(self, algorithm_name, algorithm_color, nodes_explored, visited_nodes=None, max_depth=None, parent=None):
         """
         Initialize the visualizer.
         
@@ -15,12 +15,14 @@ class PuzzleSolutionVisualizer:
             algorithm_name: Name of the algorithm (e.g., "A* Search", "BFS", "DFS")
             algorithm_color: Color theme for the algorithm (e.g., "#3498db")
             nodes_explored: Number of nodes explored during search
+            visited_nodes: Number of unique nodes visited (stored in memory)
             max_depth: Optional max depth limit (for DFS)
             parent: Parent window (if None, creates new window)
         """
         self.algorithm_name = algorithm_name
         self.algorithm_color = algorithm_color
         self.nodes_explored = nodes_explored
+        self.visited_nodes = visited_nodes if visited_nodes is not None else nodes_explored
         self.max_depth = max_depth
         self.parent = parent
     
@@ -98,14 +100,14 @@ class PuzzleSolutionVisualizer:
         
         # Title
         title_label = tk.Label(scrollable_frame, 
-                              text=f"{self.algorithm_name} Solution Path - {len(solution)-1} Moves",
+                              text=f"{self.algorithm_name} Solution Path",
                               font=('Arial', 18, 'bold'), bg=bg_dark, fg=fg_primary)
         title_label.grid(row=0, column=0, columnspan=boards_per_row, pady=(20, 5))
         
-        # Nodes explored info
-        nodes_text = f"Nodes Explored: {self.nodes_explored}"
+        # Metrics info
+        nodes_text = f"Visited Nodes: {self.visited_nodes} | Number of Steps: {len(solution)-1}"
         if self.max_depth:
-            nodes_text += f" (Max Depth: {self.max_depth})"
+            nodes_text += f" | Max Depth: {self.max_depth}"
         
         nodes_label = tk.Label(scrollable_frame,
                               text=nodes_text,
@@ -222,8 +224,17 @@ class PuzzleSolutionVisualizer:
             f_label = tk.Label(cost_frame, text=f"f = {state.total_cost}", 
                              font=('Arial', 11, 'bold'), bg=bg_dark, fg=self.algorithm_color)
             f_label.pack()
+        elif self.algorithm_name == "Greedy Best-First":
+            # GBFS shows f(n) = h only
+            f_label = tk.Label(cost_frame, text=f"f(n) = {state.h}", 
+                             font=('Arial', 11, 'bold'), bg=bg_dark, fg=self.algorithm_color)
+            f_label.pack()
+            
+            h_label = tk.Label(cost_frame, text=f"h = {state.h}", 
+                             font=('Arial', 11), bg=bg_dark, fg='#14cc60')
+            h_label.pack()
         else:
-            # BFS and DFS show depth only
+            # BFS, DFS, Bidirectional, IDDFS show depth only
             depth_label = tk.Label(cost_frame, text=f"Depth = {state.g}", 
                              font=('Arial', 11, 'bold'), bg=bg_dark, fg=self.algorithm_color)
             depth_label.pack()

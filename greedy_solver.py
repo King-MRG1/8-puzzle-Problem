@@ -1,12 +1,23 @@
+import heapq
 from puzzle_state import PuzzleState
 
 
-class DFSSolver:
+class GreedySolver:
     def __init__(self):
         self.goal_state = [[1, 2, 3], [4, 5, 6], [7, 8, 0]]
         self.nodes_explored = 0
         self.visited_nodes = 0
-        self.max_depth = 50
+    
+    def calculate_manhattan_distance(self, board):
+        distance = 0
+        for i in range(3):
+            for j in range(3):
+                if board[i][j] != 0:
+                    target_value = board[i][j]
+                    target_row = (target_value - 1) // 3
+                    target_col = (target_value - 1) % 3
+                    distance += abs(i - target_row) + abs(j - target_col)
+        return distance
     
     def get_possible_moves(self, state):
         neighbors = []
@@ -18,37 +29,45 @@ class DFSSolver:
             if 0 <= new_row < 3 and 0 <= new_col < 3:
                 new_board = [row[:] for row in state.board]
                 new_board[blank_row][blank_col], new_board[new_row][new_col] = new_board[new_row][new_col], new_board[blank_row][blank_col]
-                new_state = PuzzleState(board=new_board, g=state.g + 1, h=0, parent=state, move=move_name)
+                h = self.calculate_manhattan_distance(new_board)
+                new_state = PuzzleState(board=new_board, g=state.g + 1, h=h, parent=state, move=move_name)
                 neighbors.append(new_state)
         return neighbors
     
     def solve(self, initial_board):
-        initial_state = PuzzleState(board=initial_board, g=0, h=0)
+        h_initial = self.calculate_manhattan_distance(initial_board)
+        initial_state = PuzzleState(board=initial_board, g=0, h=h_initial)
         goal = PuzzleState(board=self.goal_state)
-        stack = [initial_state]
+        
+        # Priority queue: (h, counter, state) - only h (greedy)
+        open_list = []
+        counter = 0
+        heapq.heappush(open_list, (initial_state.h, counter, initial_state))
+        counter += 1
+        
         visited = set()
         visited.add(hash(initial_state))
         self.nodes_explored = 0
+        self.visited_nodes = 0
         
-        while stack:
-            current = stack.pop()
+        while open_list:
+            _, _, current = heapq.heappop(open_list)
             self.nodes_explored += 1
             
             if current == goal:
                 self.visited_nodes = len(visited)
-                print(f"DFS Solution found! Nodes explored: {self.nodes_explored}, Visited: {self.visited_nodes}")
+                print(f"Greedy Solution found! Nodes explored: {self.nodes_explored}, Visited: {self.visited_nodes}")
                 return self.build_solution_path(current)
             
-            if current.g >= self.max_depth:
-                continue
-            
-            for neighbor in reversed(self.get_possible_moves(current)):
+            for neighbor in self.get_possible_moves(current):
                 neighbor_hash = hash(neighbor)
                 if neighbor_hash not in visited:
                     visited.add(neighbor_hash)
-                    stack.append(neighbor)
+                    heapq.heappush(open_list, (neighbor.h, counter, neighbor))
+                    counter += 1
         
-        print(f"DFS: No solution found after exploring {self.nodes_explored} nodes.")
+        self.visited_nodes = len(visited)
+        print(f"Greedy: No solution found after exploring {self.nodes_explored} nodes.")
         return None
     
     def build_solution_path(self, state):
@@ -64,7 +83,7 @@ class DFSSolver:
             print("No solution to print.")
             return
         
-        print(f"\nDFS Solution found in {len(solution) - 1} moves:\n")
+        print(f"\nGreedy Solution found in {len(solution) - 1} moves:\n")
         for i, state in enumerate(solution):
             if state.move:
                 print(f"Move {i}: {state.move}")

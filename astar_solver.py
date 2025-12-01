@@ -4,8 +4,11 @@ from puzzle_state import PuzzleState
 
 class AStarSolver:
     def __init__(self):
-        self.goal_state = [[1, 2, 3], [4, 5, 6], [7, 8, 0]]
+        self.goal_state = [[1, 2, 3],
+                           [4, 5, 6],
+                            [7, 8, 0]]
         self.nodes_explored = 0
+        self.visited_nodes = 0
     
     def calculate_manhattan_distance(self, board):
         distance = 0
@@ -47,6 +50,7 @@ class AStarSolver:
             if current == goal:
                 print(f"A* Solution found! Nodes explored: {nodes_explored}")
                 self.nodes_explored = nodes_explored
+                self.visited_nodes = len(closed_set) + 1
                 return self.build_solution_path(current)
             
             closed_set.add(hash(current))
@@ -57,6 +61,7 @@ class AStarSolver:
         
         print(f"A*: No solution found after exploring {nodes_explored} nodes.")
         self.nodes_explored = nodes_explored
+        self.visited_nodes = len(closed_set)
         return None
     
     def build_solution_path(self, state):

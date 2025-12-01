@@ -7,6 +7,9 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from astar_solver import AStarSolver
 from bfs_solver import BFSSolver
 from dfs_solver import DFSSolver
+from bidirectional_solver import BidirectionalSolver
+from iddfs_solver import IDDFSSolver
+from greedy_solver import GreedySolver
 from puzzle_state import PuzzleState
 from design.visualizer import PuzzleSolutionVisualizer
 
@@ -153,15 +156,30 @@ class PuzzleSolverGUI:
                                   relief=tk.GROOVE)
         algo_frame.pack(fill=tk.X, pady=(0, 20))
         
-        # Radio buttons for algorithms
+        # Radio buttons for algorithms in two columns
         algorithms = [
             ("A* Search (Manhattan Distance Heuristic)", "astar", "#0d7377"),
             ("BFS (Breadth-First Search)", "bfs", "#ff6b6b"),
-            ("DFS (Depth-First Search)", "dfs", "#14cc60")
+            ("DFS (Depth-First Search)", "dfs", "#14cc60"),
+            ("Bidirectional Search (Dual BFS)", "bidirectional", "#9b59b6"),
+            ("IDDFS (Iterative Deepening DFS)", "iddfs", "#f39c12"),
+            ("GBFS (Greedy Best-First Search)", "greedy", "#e91e63")
         ]
         
-        for text, value, color in algorithms:
-            rb = tk.Radiobutton(algo_frame,
+        # Create two-column layout
+        columns_frame = tk.Frame(algo_frame, bg=self.bg_medium)
+        columns_frame.pack(fill=tk.BOTH, expand=True)
+        
+        left_column = tk.Frame(columns_frame, bg=self.bg_medium)
+        left_column.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 20))
+        
+        right_column = tk.Frame(columns_frame, bg=self.bg_medium)
+        right_column.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        
+        # Place 3 algorithms in each column
+        for idx, (text, value, color) in enumerate(algorithms):
+            parent = left_column if idx < 3 else right_column
+            rb = tk.Radiobutton(parent,
                                text=text,
                                variable=self.algorithm_var,
                                value=value,
@@ -295,7 +313,10 @@ class PuzzleSolverGUI:
             algo_config = {
                 "astar": {"name": "A* Search", "color": "#3498db", "max_depth": None},
                 "bfs": {"name": "BFS", "color": "#e74c3c", "max_depth": None},
-                "dfs": {"name": "DFS", "color": "#2ecc71", "max_depth": None}
+                "dfs": {"name": "DFS", "color": "#2ecc71", "max_depth": None},
+                "bidirectional": {"name": "Bidirectional Search", "color": "#9b59b6", "max_depth": None},
+                "iddfs": {"name": "IDDFS", "color": "#f39c12", "max_depth": None},
+                "greedy": {"name": "Greedy Best-First", "color": "#e91e63", "max_depth": None}
             }
             
             if algorithm == "astar":
@@ -308,14 +329,25 @@ class PuzzleSolverGUI:
                 solver = DFSSolver()
                 self.status_label.config(text="Running DFS...")
                 algo_config["dfs"]["max_depth"] = solver.max_depth
+            elif algorithm == "bidirectional":
+                solver = BidirectionalSolver()
+                self.status_label.config(text="Running Bidirectional Search...")
+            elif algorithm == "iddfs":
+                solver = IDDFSSolver()
+                self.status_label.config(text="Running IDDFS...")
+                algo_config["iddfs"]["max_depth"] = solver.max_depth
+            elif algorithm == "greedy":
+                solver = GreedySolver()
+                self.status_label.config(text="Running Greedy Best-First Search...")
             
             solution = solver.solve(board)
             
             if solution:
                 moves = len(solution) - 1
                 nodes = solver.nodes_explored
+                visited = getattr(solver, 'visited_nodes', nodes)
                 self.status_label.config(
-                    text=f"Solution found! {moves} moves, {nodes} nodes explored"
+                    text=f"Solution found! Visited nodes: {visited}, Steps: {moves}"
                 )
                 # Show visualization using shared visualizer
                 config = algo_config[algorithm]
@@ -323,6 +355,7 @@ class PuzzleSolverGUI:
                     algorithm_name=config["name"],
                     algorithm_color=config["color"],
                     nodes_explored=nodes,
+                    visited_nodes=visited,
                     max_depth=config["max_depth"],
                     parent=self.root  # Pass parent window
                 )
@@ -360,6 +393,7 @@ class PuzzleSolverGUI:
                     'name': 'A* Search',
                     'moves': len(astar_solution) - 1,
                     'nodes': astar_solver.nodes_explored,
+                    'visited': getattr(astar_solver, 'visited_nodes', astar_solver.nodes_explored),
                     'solver': astar_solver,
                     'solution': astar_solution
                 })
@@ -374,6 +408,7 @@ class PuzzleSolverGUI:
                     'name': 'BFS',
                     'moves': len(bfs_solution) - 1,
                     'nodes': bfs_solver.nodes_explored,
+                    'visited': getattr(bfs_solver, 'visited_nodes', bfs_solver.nodes_explored),
                     'solver': bfs_solver,
                     'solution': bfs_solution
                 })
@@ -388,8 +423,54 @@ class PuzzleSolverGUI:
                     'name': 'DFS',
                     'moves': len(dfs_solution) - 1,
                     'nodes': dfs_solver.nodes_explored,
+                    'visited': getattr(dfs_solver, 'visited_nodes', dfs_solver.nodes_explored),
                     'solver': dfs_solver,
                     'solution': dfs_solution
+                })
+            
+            # Bidirectional Search
+            self.status_label.config(text="Running Bidirectional Search...")
+            self.root.update()
+            bidirectional_solver = BidirectionalSolver()
+            bidirectional_solution = bidirectional_solver.solve(board)
+            if bidirectional_solution:
+                results.append({
+                    'name': 'Bidirectional',
+                    'moves': len(bidirectional_solution) - 1,
+                    'nodes': bidirectional_solver.nodes_explored,
+                    'visited': getattr(bidirectional_solver, 'visited_nodes', bidirectional_solver.nodes_explored),
+                    'solver': bidirectional_solver,
+                    'solution': bidirectional_solution
+                })
+            
+            # IDDFS
+            self.status_label.config(text="Running IDDFS...")
+            self.root.update()
+            iddfs_solver = IDDFSSolver()
+            iddfs_solution = iddfs_solver.solve(board)
+            if iddfs_solution:
+                results.append({
+                    'name': 'IDDFS',
+                    'moves': len(iddfs_solution) - 1,
+                    'nodes': iddfs_solver.nodes_explored,
+                    'visited': getattr(iddfs_solver, 'visited_nodes', iddfs_solver.nodes_explored),
+                    'solver': iddfs_solver,
+                    'solution': iddfs_solution
+                })
+            
+            # Greedy Best-First Search
+            self.status_label.config(text="Running Greedy Best-First Search...")
+            self.root.update()
+            greedy_solver = GreedySolver()
+            greedy_solution = greedy_solver.solve(board)
+            if greedy_solution:
+                results.append({
+                    'name': 'Greedy',
+                    'moves': len(greedy_solution) - 1,
+                    'nodes': greedy_solver.nodes_explored,
+                    'visited': getattr(greedy_solver, 'visited_nodes', greedy_solver.nodes_explored),
+                    'solver': greedy_solver,
+                    'solution': greedy_solution
                 })
             
             if results:
@@ -407,7 +488,7 @@ class PuzzleSolverGUI:
         """Show comparison results in a new window."""
         comp_window = tk.Toplevel(self.root)
         comp_window.title("Algorithm Comparison Results")
-        comp_window.geometry("850x550")
+        comp_window.geometry("900x700")
         comp_window.configure(bg=self.bg_dark)
         
         # Title
@@ -423,11 +504,11 @@ class PuzzleSolverGUI:
         results_frame.pack(fill=tk.BOTH, expand=True, padx=40)
         
         # Headers
-        headers = ['Algorithm', 'Moves', 'Nodes Explored', 'Efficiency']
-        colors = ['#0d7377', '#ff6b6b', '#14cc60']
+        headers = ['Algorithm', 'Moves', 'Visited Nodes', 'Number of Steps']
+        colors = ['#0d7377', '#ff6b6b', '#14cc60', '#9b59b6', '#f39c12', '#e91e63']
         
         # Define fixed column widths
-        col_widths = [150, 100, 150, 100]  # pixels for each column
+        col_widths = [150, 100, 150, 150]  # pixels for each column
         
         for col, header in enumerate(headers):
             label = tk.Label(results_frame,
@@ -469,30 +550,29 @@ class PuzzleSolverGUI:
                                   anchor='center')
             moves_label.grid(row=idx+1, column=1, sticky='ew', padx=2, pady=2)
             
-            # Nodes explored
-            nodes_label = tk.Label(results_frame,
-                                  text=str(result['nodes']),
+            # Visited Nodes
+            visited_label = tk.Label(results_frame,
+                                    text=str(result['visited']),
+                                    font=('Arial', 11),
+                                    bg=self.bg_medium,
+                                    fg=self.fg_primary,
+                                    width=col_widths[2]//7,
+                                    padx=15,
+                                    pady=15,
+                                    anchor='center')
+            visited_label.grid(row=idx+1, column=2, sticky='ew', padx=2, pady=2)
+            
+            # Number of Steps
+            steps_label = tk.Label(results_frame,
+                                  text=str(result['moves']),
                                   font=('Arial', 11),
                                   bg=self.bg_medium,
                                   fg=self.fg_primary,
-                                  width=col_widths[2]//7,
+                                  width=col_widths[3]//7,
                                   padx=15,
                                   pady=15,
                                   anchor='center')
-            nodes_label.grid(row=idx+1, column=2, sticky='ew', padx=2, pady=2)
-            
-            # Efficiency (nodes per move)
-            efficiency = result['nodes'] / max(result['moves'], 1)
-            eff_label = tk.Label(results_frame,
-                                text=f"{efficiency:.2f}",
-                                font=('Arial', 11),
-                                bg=self.bg_medium,
-                                fg=self.fg_primary,
-                                width=col_widths[3]//7,
-                                padx=15,
-                                pady=15,
-                                anchor='center')
-            eff_label.grid(row=idx+1, column=3, sticky='ew', padx=2, pady=2)
+            steps_label.grid(row=idx+1, column=3, sticky='ew', padx=2, pady=2)
         
         # Configure grid weights
         for col in range(4):
@@ -514,10 +594,12 @@ class PuzzleSolverGUI:
         # Create visualization function with proper parameters
         def show_visualization(result, color):
             max_depth = result['solver'].max_depth if hasattr(result['solver'], 'max_depth') else None
+            visited = getattr(result['solver'], 'visited_nodes', result['nodes'])
             visualizer = PuzzleSolutionVisualizer(
                 algorithm_name=result['name'],
                 algorithm_color=color,
                 nodes_explored=result['nodes'],
+                visited_nodes=visited,
                 max_depth=max_depth,
                 parent=self.root  # Pass parent window
             )

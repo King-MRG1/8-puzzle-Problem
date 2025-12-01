@@ -6,6 +6,7 @@ class BFSSolver:
     def __init__(self):
         self.goal_state = [[1, 2, 3], [4, 5, 6], [7, 8, 0]]
         self.nodes_explored = 0
+        self.visited_nodes = 0
     
     def get_possible_moves(self, state):
         neighbors = []
@@ -28,13 +29,15 @@ class BFSSolver:
         visited = set()
         visited.add(hash(initial_state))
         self.nodes_explored = 0
+        self.visited_nodes = 0
         
         while queue:
             current = queue.popleft()
             self.nodes_explored += 1
             
             if current == goal:
-                print(f"BFS Solution found! Nodes explored: {self.nodes_explored}")
+                self.visited_nodes = len(visited)
+                print(f"BFS Solution found! Nodes explored: {self.nodes_explored}, Visited: {self.visited_nodes}")
                 return self.build_solution_path(current)
             
             for neighbor in self.get_possible_moves(current):
@@ -43,6 +46,7 @@ class BFSSolver:
                     visited.add(neighbor_hash)
                     queue.append(neighbor)
         
+        self.visited_nodes = len(visited)
         print(f"BFS: No solution found after exploring {self.nodes_explored} nodes.")
         return None
     
