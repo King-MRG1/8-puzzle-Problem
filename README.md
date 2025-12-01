@@ -1,6 +1,6 @@
 # 8-Puzzle Solver
 
-An intelligent solution to the classic 8-puzzle problem using three different search algorithms: A\* Search, Breadth-First Search (BFS), and Depth-First Search (DFS).
+An intelligent solution to the classic 8-puzzle problem using six different search algorithms: A\* Search, Breadth-First Search (BFS), Depth-First Search (DFS), Bidirectional Search, Iterative Deepening DFS (IDDFS), and Greedy Best-First Search (GBFS).
 
 ## 📋 Problem Description
 
@@ -93,36 +93,117 @@ Calculates the sum of horizontal and vertical distances each tile must travel to
 
 ---
 
+### 4. Bidirectional Search
+
+**Type:** Informed Search Algorithm
+
+**How it Works:**
+
+- Runs two simultaneous BFS searches from both start and goal states
+- Searches meet in the middle, significantly reducing search space
+- Terminates when the two frontiers intersect
+
+**Characteristics:**
+
+- ✅ **Optimal:** Guarantees shortest solution path
+- ✅ **Efficient:** Much faster than single-direction BFS
+- ✅ **Complete:** Always finds a solution if one exists
+- 📊 **Performance:** Typically explores 200-500 nodes for moderate puzzles
+
+**Best Used When:** You need optimal solutions faster than standard BFS.
+
+---
+
+### 5. Iterative Deepening DFS (IDDFS)
+
+**Type:** Uninformed Search Algorithm
+
+**How it Works:**
+
+- Combines DFS's space efficiency with BFS's optimality
+- Repeatedly performs depth-limited DFS with increasing depth limits (0 to 50)
+- Finds optimal solution with minimal memory usage
+
+**Characteristics:**
+
+- ✅ **Optimal:** Guarantees shortest solution path
+- ✅ **Memory Efficient:** Only stores nodes along current path
+- ✅ **Complete:** Always finds a solution within depth limit
+- 📊 **Performance:** Typically explores 300-800 nodes for moderate puzzles
+
+**Best Used When:** You need optimal solutions with limited memory.
+
+---
+
+### 6. Greedy Best-First Search (GBFS)
+
+**Type:** Informed Search Algorithm
+
+**How it Works:**
+
+- Uses only the heuristic function to guide search: `f(n) = h(n)`
+- Selects nodes that appear closest to the goal (Manhattan distance)
+- Does not consider actual path cost `g(n)`
+
+**Characteristics:**
+
+- ❌ **Not Optimal:** May find longer paths to the goal
+- ✅ **Very Fast:** Often finds solutions quickly
+- ⚠️ **Incomplete:** May fail without cycle detection
+- 📊 **Performance:** Typically explores 30-80 nodes for moderate puzzles
+
+**Best Used When:** Speed is critical and suboptimal solutions are acceptable.
+
+---
+
 ## 🆚 Algorithm Comparison
 
-| Criterion          | A\* Search      | BFS                 | DFS                 |
-| ------------------ | --------------- | ------------------- | ------------------- |
-| **Optimality**     | ✅ Optimal      | ✅ Optimal          | ❌ Not Optimal      |
-| **Completeness**   | ✅ Complete     | ✅ Complete         | ⚠️ Limited by depth |
-| **Memory Usage**   | 🟡 Medium       | 🔴 High             | 🟢 Low              |
-| **Speed**          | 🟢 Fast         | 🔴 Slow             | 🟡 Variable         |
-| **Nodes Explored** | 🟢 Low-Medium   | 🔴 High             | 🟡 Variable         |
-| **Best For**       | General purpose | Guaranteed shortest | Memory constrained  |
+| Criterion         | A\*         | BFS         | DFS            | Bidirectional | IDDFS         | GBFS             |
+| ----------------- | ----------- | ----------- | -------------- | ------------- | ------------- | ---------------- |
+| **Optimality**    | ✅ Optimal  | ✅ Optimal  | ❌ Not Optimal | ✅ Optimal    | ✅ Optimal    | ❌ Not Optimal   |
+| **Completeness**  | ✅ Complete | ✅ Complete | ⚠️ Limited     | ✅ Complete   | ✅ Complete   | ⚠️ Limited       |
+| **Memory Usage**  | 🟡 Medium   | 🔴 High     | 🟢 Low         | 🟡 Medium     | 🟢 Low        | 🟢 Low-Medium    |
+| **Speed**         | 🟢 Fast     | 🔴 Slow     | 🟡 Variable    | 🟢 Very Fast  | 🟢 Good       | 🟢 Very Fast     |
+| **Visited Nodes** | 🟢 Low-Med  | 🔴 High     | 🟡 Variable    | 🟢 Low        | 🟡 Medium     | 🟢 Low           |
+| **Best For**      | General use | Guaranteed  | Memory limited | Fast optimal  | Space-limited | Fast non-optimal |
 
 ### Example Performance (12-move solution):
 
 **A\* Search:**
 
 - Moves: 12 (optimal)
-- Nodes Explored: ~80
+- Visited Nodes: ~80
 - Execution Time: <0.1s
 
 **BFS:**
 
 - Moves: 12 (optimal)
-- Nodes Explored: ~1,200
+- Visited Nodes: ~1,200
 - Execution Time: ~0.3s
 
 **DFS:**
 
 - Moves: 35-45 (non-optimal)
-- Nodes Explored: ~400
+- Visited Nodes: ~400
 - Execution Time: Variable
+
+**Bidirectional Search:**
+
+- Moves: 12 (optimal)
+- Visited Nodes: ~300
+- Execution Time: ~0.15s
+
+**IDDFS:**
+
+- Moves: 12 (optimal)
+- Visited Nodes: ~500
+- Execution Time: ~0.2s
+
+**GBFS:**
+
+- Moves: 12-18 (often non-optimal)
+- Visited Nodes: ~50
+- Execution Time: <0.1s
 
 ---
 
@@ -162,27 +243,30 @@ python main.py
 
 2. **Choose Search Algorithm:**
 
-   - Select A\*, BFS, or DFS using radio buttons
+   - Select from 6 algorithms: A\*, BFS, DFS, Bidirectional, IDDFS, or GBFS
+   - Algorithms are organized in a two-column layout for easy selection
 
 3. **Solve:**
 
    - Click "🔍 SOLVE PUZZLE" to find solution with selected algorithm
-   - Click "📊 COMPARE ALL" to run all three algorithms and compare results
+   - Click "📊 COMPARE ALL" to run all six algorithms and compare results
 
 4. **View Results:**
    - See step-by-step visualization of the solution path
-   - Review performance metrics: moves, nodes explored, efficiency
+   - Review performance metrics: visited nodes, number of steps
+   - Compare algorithm-specific information: f(n), g(n), h(n) values
 
 ---
 
 ## 📊 Features
 
-- **Interactive GUI:** Modern dark-themed interface for easy interaction
-- **Multiple Algorithms:** Compare three different search strategies
+- **Interactive GUI:** Modern dark-themed interface with two-column algorithm layout
+- **Six Search Algorithms:** Compare different search strategies (informed & uninformed)
 - **Step-by-Step Visualization:** Watch how each algorithm solves the puzzle
-- **Performance Metrics:** Analyze nodes explored, moves, and efficiency
+- **Enhanced Metrics:** Visited nodes and number of steps tracking
+- **Algorithm-Specific Display:** Shows f(n), g(n), h(n) for informed algorithms
+- **Performance Comparison:** Side-by-side comparison of all six algorithms
 - **Preset Puzzles:** Test with easy, medium, and hard difficulty levels
-- **Algorithm Comparison:** Side-by-side performance comparison tool
 
 ---
 
@@ -190,37 +274,19 @@ python main.py
 
 ```
 8-puzzle/
-├── design/              # GUI and visualization components
-├── reports/             # Project documentation and reports
-├── astar_solver.py      # A* search implementation
-├── bfs_solver.py        # BFS implementation
-├── dfs_solver.py        # DFS implementation
-├── puzzle_state.py      # State representation
-└── main.py              # Application entry point
+├── design/                  # GUI and visualization components
+│   ├── gui_interface.py     # Main GUI with dark mode
+│   └── visualizer.py        # Solution visualization
+├── reports/                 # Project documentation and reports
+│   ├── generate_report.py   # PDF report generator
+│   └── 8-Puzzle_Solver_Report.pdf
+├── astar_solver.py          # A* search implementation
+├── bfs_solver.py            # BFS implementation
+├── dfs_solver.py            # DFS implementation
+├── bidirectional_solver.py  # Bidirectional search implementation
+├── iddfs_solver.py          # IDDFS implementation
+├── greedy_solver.py         # GBFS implementation
+├── puzzle_state.py          # State representation
+├── main.py                  # Application entry point
+└── README.md                # This file
 ```
-
----
-
-## 👥 Team
-
-- **Mohamed Ahmed Ramadan** - 23015430
-- **Mohamed Mahmoud Ibrahim** - 23015446
-- **Mazen Hussein Mostafa** - 23017827
-
----
-
-## 🎓 Educational Context
-
-This project was developed as part of an Artificial Intelligence course to demonstrate:
-
-- Search algorithm implementation and comparison
-- State space representation
-- Heuristic design and evaluation
-- Trade-offs between optimality, completeness, and efficiency
-- SOLID principles in software design
-
----
-
-## 📝 License
-
-Educational Project © 2025
